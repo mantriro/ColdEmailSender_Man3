@@ -22,3 +22,20 @@ This application is for sending emails with attachments.
    ```csharp
    var smtpUser = "your_email@gmail.com";       // Replace with your Gmail address
    var smtpPass = "your_16_char_app_password"; // Replace with your Gmail App Passcode
+
+
+
+## Publish Instructions
+
+### **Windows**
+1. Open Command Prompt and navigate to the project folder:
+```bash
+cd path\to\ColdEmailSender_Man3 
+
+
+### **MAC**
+1. Open Command Prompt and navigate to the project folder:
+```bash
+cd path/to/ColdEmailSender_Man3
+dotnet publish -f net8.0-macos -c Release -p:SelfContained=true -r osx-arm64
+bin/Release/net8.0-macos/publish/ColdEmailSender.app
