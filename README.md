@@ -22,7 +22,7 @@ This application is for sending emails with attachments.
    ```csharp
    var smtpUser = "your_email@gmail.com";       // Replace with your Gmail address
    var smtpPass = "your_16_char_app_password"; // Replace with your Gmail App Passcode
-
+``
 
 
 ## Publish Instructions
