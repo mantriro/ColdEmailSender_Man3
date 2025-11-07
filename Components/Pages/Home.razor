@@ -1,0 +1,206 @@
+﻿@page "/"
+
+<h3>Cold Email Sender</h3>
+
+<div class="container mt-3">
+    <!-- Email Type -->
+    <div class="mb-3">
+        <label for="emailType" class="form-label">Select Email Type</label>
+        <select id="emailType" class="form-select" @bind="selectedEmailType">
+            <option value="">-- Select --</option>
+            <option value="Intro">Introduction Email</option>
+            <option value="FollowUp">Follow-Up Email</option>
+            <option value="Offer">Special Offer Email</option>
+            <option value="Recruiter">Recruiter Outreach</option>
+        </select>
+    </div>
+
+    <!-- To Email -->
+    <div class="mb-3">
+        <label for="toEmail" class="form-label">To</label>
+        <input id="toEmail" class="form-control" @bind="toEmail" placeholder="recipient@example.com" />
+    </div>
+
+    <!-- Subject -->
+    <div class="mb-3">
+        <label for="subject" class="form-label">Subject</label>
+        <input id="subject" class="form-control" @bind="subject" />
+    </div>
+
+    <!-- Body -->
+    <div class="mb-3">
+        <label for="body" class="form-label">Email Body</label>
+        <textarea id="body" class="form-control" rows="10" @bind="emailBody"></textarea>
+    </div>
+
+    <!-- Attach Button -->
+    <div class="mb-3">
+        <button class="btn btn-secondary" @onclick="PickFile">Attach Resume</button>
+        @if (!string.IsNullOrEmpty(attachedFileName))
+        {
+            <span class="ms-2">Attached: @attachedFileName</span>
+        }
+    </div>
+
+    <!-- Send Button -->
+    <button class="btn btn-primary" @onclick="SendEmail">Send Email</button>
+
+    <!-- Status Message -->
+    @if (!string.IsNullOrEmpty(statusMessage))
+    {
+        <div class="alert alert-info mt-3">@statusMessage</div>
+    }
+</div>
+
+@code {
+    // Email fields
+    private string _selectedEmailType = "Recruiter";
+    private string selectedEmailType
+    {
+        get => _selectedEmailType;
+        set
+        {
+            _selectedEmailType = value;
+
+            // Only load recruiter template if user hasn't typed anything
+            if (value == "Recruiter" && string.IsNullOrWhiteSpace(emailBody))
+            {
+                LoadRecruiterTemplate();
+            }
+            else if (value != "Recruiter")
+            {
+                UpdateEmailTemplate(value);
+            }
+        }
+    }
+
+    private string toEmail = "";
+    private string subject = "";
+    private string emailBody = "";
+    private string statusMessage = "";
+
+    // File attachment
+    private string attachedFilePath = "";
+    private string attachedFileName = "";
+
+    protected override void OnInitialized()
+    {
+        // Pre-fill recruiter template on app start
+        if (_selectedEmailType == "Recruiter")
+        {
+            LoadRecruiterTemplate();
+        }
+    }
+
+    private void LoadRecruiterTemplate()
+    {
+        subject = ".NET Developer Application";
+        emailBody = @"Hey Recruiter,
+
+Hope you are having a wonderful day. I am Rohit Mantri, a .Net developer with 7 YOE.
+
+I just applied for the .Net developer role posted by you and wanted to reach out for any future opportunities as well.
+
+Contacts:
+mrohit58@gmail.com
+8509661884
+
+Thanks and Regards,
+Rohit Mantri";
+    }
+
+    private void UpdateEmailTemplate(string type)
+    {
+        switch (type)
+        {
+            case "Intro":
+                subject = "Introducing Myself";
+                emailBody = "Hi, I wanted to quickly introduce myself and what I do...";
+                break;
+            case "FollowUp":
+                subject = "Following Up";
+                emailBody = "Just wanted to follow up on my last email to see if you had a chance to review...";
+                break;
+            case "Offer":
+                subject = "Special Offer Just for You";
+                emailBody = "We’re offering a limited-time discount. I’d love to share more details...";
+                break;
+            default:
+                subject = "";
+                emailBody = "";
+                break;
+        }
+    }
+
+    // Pick a file from system (Windows / Mac)
+    private async Task PickFile()
+    {
+        try
+        {
+            var customFileType = new FilePickerFileType(new Dictionary<DevicePlatform, IEnumerable<string>>
+        {
+            { DevicePlatform.Android, new[] { "application/pdf", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document" } },
+            { DevicePlatform.iOS, new[] { "public.data", "public.content" } },
+            { DevicePlatform.WinUI, new[] { ".pdf", ".doc", ".docx", ".txt" } },
+            { DevicePlatform.MacCatalyst, new[] { "com.adobe.pdf" } },
+        });
+
+            var result = await FilePicker.Default.PickAsync(new PickOptions
+                {
+                    PickerTitle = "Select Resume",
+                    FileTypes = customFileType
+                });
+
+            if (result != null)
+            {
+                attachedFilePath = result.FullPath;
+                attachedFileName = result.FileName;
+            }
+        }
+        catch (Exception ex)
+        {
+            statusMessage = $"File pick failed: {ex.Message}";
+        }
+    }
+
+
+
+    // Send email
+    private async Task SendEmail()
+    {
+        try
+        {
+            var smtpUser = "sender@gmail.com";
+            var smtpPass = "App Passcode with 2FA"; // Use App Password for Gmail!
+
+            using var smtp = new System.Net.Mail.SmtpClient("smtp.gmail.com", 587)
+                {
+                    Credentials = new System.Net.NetworkCredential(smtpUser, smtpPass),
+                    EnableSsl = true
+                };
+
+            var mail = new System.Net.Mail.MailMessage
+                {
+                    From = new System.Net.Mail.MailAddress(smtpUser),
+                    Subject = subject,
+                    Body = emailBody,
+                    IsBodyHtml = false
+                };
+
+            mail.To.Add(toEmail);
+
+            // Attach user-selected file
+            if (!string.IsNullOrEmpty(attachedFilePath) && File.Exists(attachedFilePath))
+            {
+                mail.Attachments.Add(new System.Net.Mail.Attachment(attachedFilePath));
+            }
+
+            await smtp.SendMailAsync(mail);
+            statusMessage = $"Email sent successfully to {toEmail}";
+        }
+        catch (Exception ex)
+        {
+            statusMessage = $"Failed: {ex.Message}";
+        }
+    }
+}
