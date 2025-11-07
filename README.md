@@ -30,7 +30,9 @@ This application is for sending emails with attachments.
 ### **Windows**
 1. Open Command Prompt and navigate to the project folder:
 ```bash
-cd path\to\ColdEmailSender_Man3 
+cd path\to\ColdEmailSender_Man3
+dotnet publish -f net8.0-windows10.0.19041.0 -c Release -p:PublishSingleFile=true -p:SelfContained=true -r win-x64
+
 ```
 
 ### **MAC**
